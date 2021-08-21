@@ -44,10 +44,20 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.oLoadedFilePathLabel.setText(fname[0])
         self.oLoadedFilePathLabel.adjustSize()
         self.image = cv2.imread(fname[0])
-        self.image = QtGui.QImage(self.image.data, self.image.shape[1], self.image.shape[0], QtGui.QImage.Format_RGB888).rgbSwapped()
+        self.Qimage = QtGui.QImage(self.image.data, self.image.shape[1], self.image.shape[0], QtGui.QImage.Format_RGB888).rgbSwapped()
         self.pixelMapOriginal = QtGui.QPixmap.fromImage(self.image)
         self.pixelMapDisplay = self.pixelMapOriginal
         self.updateImage()
+
+    #opencv Methods
+    #blur = blure factor before applying the circle algortithm
+    def circleMask(self, blur, scale):
+        modifiedImage = self.image
+        modifiedImage = cv2.cvtColor(self.image, cv2.COLOR_BGR2GRAY)
+        modifiedImage = cv2.medianBlur(modifiedImage, blur)
+        
+        width = int(modifiedImage.shape[1] * scale / 100)
+        height = int(modifiedImage.shape[0] * scale / 100)
 
 
 
