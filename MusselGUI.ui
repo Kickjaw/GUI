@@ -27,8 +27,8 @@
           <rect>
            <x>0</x>
            <y>0</y>
-           <width>921</width>
-           <height>582</height>
+           <width>925</width>
+           <height>599</height>
           </rect>
          </property>
          <layout class="QHBoxLayout" name="horizontalLayout_6">
@@ -49,6 +49,13 @@
          <layout class="QHBoxLayout" name="horizontalLayout_5">
           <item>
            <layout class="QHBoxLayout" name="horizontalLayout_2">
+            <item>
+             <widget class="QPushButton" name="oCircleMaskButton">
+              <property name="text">
+               <string>Cricle Mask </string>
+              </property>
+             </widget>
+            </item>
             <item>
              <widget class="QLabel" name="label_2">
               <property name="text">
@@ -160,7 +167,7 @@
      <x>0</x>
      <y>0</y>
      <width>947</width>
-     <height>26</height>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">

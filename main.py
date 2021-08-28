@@ -3,6 +3,7 @@ from PyQt5 import QtGui, QtCore, QtWidgets
 from PyQt5.QtWidgets import QApplication, QDialog, QMainWindow, QMessageBox, QFileDialog
 from PyQt5.uic import loadUi
 from mussel_gui import Ui_MainWindow
+import numpy as np
 
 class MainWindow(QMainWindow, Ui_MainWindow):
     def __init__(self, parent=None):
@@ -20,19 +21,33 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.actionOpen.triggered.connect(self.openImage)
         self.actionZoom_In.triggered.connect(self.zoomIn)
         self.actionZoom_Out.triggered.connect(self.zoomOut)
+        self.action100.triggered.connect(self.set100)
+        self.action75.triggered.connect(self.set75)
+        self.action50.triggered.connect(self.set50)
+        self.action25.triggered.connect(self.set25)
+        self.oCircleMaskButton.clicked.connect(self.circleMaskButton)
 
     def zoomIn(self):
         self.scaleImage(1.25)
-    
     def zoomOut(self):
         self.scaleImage(.80)
+    def set100(self):
+        self.scaleImage(1)
+    def set75(self):
+        self.scaleImage(.75)
+    def set50(self):
+        self.scaleImage(.5)
+    def set25(self):
+        self.scaleImage(.25)
+    def circleMaskButton(self):
+        self.circleMask(5, .1)
     
     def scaleImage(self, Factor):
         #get the height of the current window and multiply by the scale factor
         #then set pixmap.scaledtoHeight to that new number
         self.scalingFactor *= Factor
-        self.scalingFactor = round(self.pixelMapOriginal.height() * self.scalingFactor)
-        self.pixelMapDisplay = self.pixelMapOriginal.scaledToHeight(self.scalingFactor)
+        scaledHeight = round(self.pixelMapOriginal.height() * self.scalingFactor)
+        self.pixelMapDisplay = self.pixelMapOriginal.scaledToHeight(scaledHeight)
         self.updateImage()
 
     def updateImage(self):
@@ -45,19 +60,14 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.oLoadedFilePathLabel.adjustSize()
         self.image = cv2.imread(fname[0])
         self.Qimage = QtGui.QImage(self.image.data, self.image.shape[1], self.image.shape[0], QtGui.QImage.Format_RGB888).rgbSwapped()
-        self.pixelMapOriginal = QtGui.QPixmap.fromImage(self.image)
+        self.pixelMapOriginal = QtGui.QPixmap.fromImage(self.Qimage)
         self.pixelMapDisplay = self.pixelMapOriginal
-        self.updateImage()
 
-    #opencv Methods
-    #blur = blure factor before applying the circle algortithm
-    def circleMask(self, blur, scale):
-        modifiedImage = self.image
-        modifiedImage = cv2.cvtColor(self.image, cv2.COLOR_BGR2GRAY)
-        modifiedImage = cv2.medianBlur(modifiedImage, blur)
-        
-        width = int(modifiedImage.shape[1] * scale / 100)
-        height = int(modifiedImage.shape[0] * scale / 100)
+        #auto scale the image to the window size on load
+        scaleFactor = self.oImageDisplayLabel.height() / self.image.shape[0]
+        self.scaleImage(scaleFactor)
+
+
 
 
 
