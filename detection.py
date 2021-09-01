@@ -91,8 +91,11 @@ class darkentDetection(object):
             
             text = '%s: %.2f' % (self.classes[classId[0]], score)
             cv2.putText(self.image, text, (box[0], box[1] - 5), cv2.FONT_HERSHEY_SIMPLEX, 1,
-                        color=(0, 255, 0), thickness=2) 
-        plt.imshow(self.image)
+                        color=(0, 255, 0), thickness=2)
+        im2 = self.image.copy()
+        im2[:, :, 0] = self.image[:, :, 2]
+        im2[:, :, 2] = self.image[:, :, 0] 
+        plt.imshow(im2)
         plt.show()
     
 
