@@ -1,3 +1,5 @@
+#https://www.uniquesoftwaredev.com/calculating-the-size-of-objects-in-photos-with-computer-vision/
+
 import cv2
 import matplotlib.pyplot as plt
 import numpy as np
