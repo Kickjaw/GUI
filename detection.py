@@ -164,6 +164,7 @@ class darkentDetection(object):
         im2[:, :, 0] = self.image[:, :, 2]
         im2[:, :, 2] = self.image[:, :, 0]
         print(musselCount, open_musselCount)
+        cv2.imwrite('detections.jpg', self.image)
         plt.imshow(im2)
         plt.show()
     
