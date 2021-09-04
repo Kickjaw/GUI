@@ -9,15 +9,19 @@ import dataclasses
 import inspect
 from dataclasses import dataclass, field
 
-@dataclass(order=True)
+@dataclass
 class dMussel:
     classID: int
-    classname: str = ""
+    score: int
+    heightMeasurment: int
+    widthMeasurment: int
+    #classname: str = ""
     boundingBox: list(int) = field(default_factory=list)
+    
 
 
 
-class darkentDetection(object):
+class darkentDetection(dMussel):
 
     def __init__(self):
         self.image = cv2.imread('3.jpg')
@@ -29,7 +33,7 @@ class darkentDetection(object):
         self.model.setInputParams(scale=1 / 255, size=(512, 512), swapRB=True)
         self.tiles = [] #list of tiles, tile = [tilledImage, tileYcord, tileXcord]
         self.tilledDimensions = [0,0] #[numOfXtiles, numOfYtiles]
-        self.detections = [] #list of detected items, = []
+        self.detections = [] #list dMussel objects
 
     #takes in an image and overlap and returns a list of images
     #returnes list of images all the same size, if the cut tile is to small pad with black pixels
@@ -70,9 +74,7 @@ class darkentDetection(object):
             classIds, scores, boxes = self.model.detect(tile[0], confThreshold=0.6, nmsThreshold=0.5)
             #box = [xcord, ycord, boxwidth, boxheight]
             #add in for loop to go over boxes and append them to the main box list, while translating them in
-
-
-            #space so that they line up with the original
+            #space so that they line up with the original image
             for (classId, score, box) in zip(classIds, scores, boxes):
                 # collisionsToUse = self.mEdgesToUse(tile)
                 # if self.mEdgeCollision(box, collisionsToUse):
@@ -84,9 +86,8 @@ class darkentDetection(object):
                         boxTranslated = [box[0]+(tile[2]*512-self.overlap), box[1], box[2], box[3]]
                     else:
                         boxTranslated = [box[0]+(tile[2]*512-self.overlap), box[1]+(tile[1]*512-self.overlap), box[2], box[3]]
-                    #change this it numpy array
-                    
-                    self.detections.append([classId, score, boxTranslated])
+
+                    self.detections.append(dMussel(classId, score, boundingBox=boxTranslated))
 
     #method to determine if dectection should be used or not with overlap
     #returns bool
@@ -153,16 +154,13 @@ class darkentDetection(object):
         print('display')
         musselCount = 0
         open_musselCount = 0
-        for detection in self.detections:
-            classId = detection[0]
-            score = detection[1]
-            box = detection[2]
-            if classId == 0:
+        for mussel in self.detections:
+            if mussel.classId == 0:
                 musselCount +=1
-                cv2.rectangle(self.image, (box[0], box[1]), (box[0] + box[2], box[1] + box[3]), color=(255, 255, 255), thickness=1)
-            elif classId == 1:
+                cv2.rectangle(self.image, (mussel.box[0], mussel.box[1]), (mussel.box[0] + mussel.box[2], mussel.box[1] + mussel.box[3]), color=(255, 255, 255), thickness=1)
+            elif mussel.classId == 1:
                 open_musselCount +=1
-                cv2.rectangle(self.image, (box[0], box[1]), (box[0] + box[2], box[1] + box[3]), color=(0, 255, 0), thickness=1)
+                cv2.rectangle(self.image, (mussel.box[0], mussel.box[1]), (mussel.box[0] + mussel.box[2], mussel.box[1] + mussel.box[3]), color=(0, 255, 0), thickness=1)
             
             
             #text = '%s: %.2f' % (self.classes[classId[0]], score)
@@ -250,7 +248,7 @@ if __name__ == "__main__":
     app = darkentDetection()
     app.mTileImage()
     app.mDetectMussels()
-    app.mMeasureDetectedMussels()
+    #app.mMeasureDetectedMussels()
     app.mDisplayDetections()
     
 
