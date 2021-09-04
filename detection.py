@@ -8,15 +8,16 @@ from scipy.spatial import distance as dist
 import dataclasses
 import inspect
 from dataclasses import dataclass, field
+import csv
 
 @dataclass
 class dMussel:
-    classID: int
+    classId: int
     score: int
-    heightMeasurment: int
-    widthMeasurment: int
+    heightMeasurment: int = field(default_factory=int)
+    widthMeasurment: int = field(default_factory=int)
     #classname: str = ""
-    boundingBox: list(int) = field(default_factory=list)
+    box: "list[int]" = field(default_factory=list)
     
 
 
@@ -87,7 +88,7 @@ class darkentDetection(dMussel):
                     else:
                         boxTranslated = [box[0]+(tile[2]*512-self.overlap), box[1]+(tile[1]*512-self.overlap), box[2], box[3]]
 
-                    self.detections.append(dMussel(classId, score, boundingBox=boxTranslated))
+                    self.detections.append(dMussel(classId, score, box=boxTranslated))
 
     #method to determine if dectection should be used or not with overlap
     #returns bool
@@ -175,9 +176,9 @@ class darkentDetection(dMussel):
     
     #for a list of detections, iterates through and measures the mussels that are closed
     def mMeasureDetectedMussels(self):
-        for detection in self.detections:
-            if detection[0] == 0:
-                cropped_mussel = self.mBBoxCrop(detection[2])
+        for mussel in self.detections:
+            if mussel.classId == 0:
+                cropped_mussel = self.mBBoxCrop(mussel.box)
                 self.mMeasureContour(cropped_mussel)
     
     #for a given bounding box returns the portion of the image within it
@@ -188,6 +189,7 @@ class darkentDetection(dMussel):
         return image
 
     #takes in a image of a single detected item and returns the height and width of it
+    #things to add, rotate the mussels so they all face the same direction
     def mMeasureContour(self, image):
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         gray = cv2.GaussianBlur(gray, (7,7), 0)
@@ -214,41 +216,53 @@ class darkentDetection(dMussel):
             cv2.drawContours(orig, [bbox.astype("int")], -1, (0, 255, 0), 1)
 
             for (x, y) in bbox:
-                cv2.circle(orig, (int(x), int(y)), 5, (0, 0, 255),-1)
-                # unpack the ordered bounding bbox; find midpoints
-                (tl, tr, br, bl) = bbox
-                (tltrX, tltrY) = mdpt(tl, tr)
-                (blbrX, blbrY) = mdpt(bl, br)
-                (tlblX, tlblY) = mdpt(tl, bl)
-                (trbrX, trbrY) = mdpt(tr, br)
+                cv2.circle(orig, (int(x), int(y)), 2, (0, 0, 255),-1)
+            # unpack the ordered bounding bbox; find midpoints
+            (tl, tr, br, bl) = bbox
+            (tltrX, tltrY) = mdpt(tl, tr)
+            (blbrX, blbrY) = mdpt(bl, br)
+            (tlblX, tlblY) = mdpt(tl, bl)
+            (trbrX, trbrY) = mdpt(tr, br)
 
-                # draw the mdpts on the image (blue);lines between the mdpts (yellow)
-                # cv2.circle(orig, (int(tltrX), int(tltrY)), 2, (255, 0,0), -1)
-                # cv2.circle(orig, (int(blbrX), int(blbrY)), 2, (255, 0, 0), -1)
-                # cv2.circle(orig, (int(tlblX), int(tlblY)), 2, (255, 0, 0), -1)
-                # cv2.circle(orig, (int(trbrX), int(trbrY)), 2, (255, 0, 0), -1)
-                # cv2.line(orig, (int(tltrX), int(tltrY)), (int(blbrX),
-                # int(blbrY)),(0, 255, 255), 2)
-                # cv2.line(orig, (int(tlblX), int(tlblY)), (int(trbrX),
-                # int(trbrY)),(0, 255, 255), 2)
-                # compute the Euclidean distances between the mdpts
-                dA = dist.euclidean((tltrX, tltrY), (blbrX, blbrY))
-                dB = dist.euclidean((tlblX, tlblY), (trbrX, trbrY))
+            # draw the mdpts on the image (blue);lines between the mdpts (yellow)
+            # cv2.circle(orig, (int(tltrX), int(tltrY)), 2, (255, 0,0), -1)
+            # cv2.circle(orig, (int(blbrX), int(blbrY)), 2, (255, 0, 0), -1)
+            # cv2.circle(orig, (int(tlblX), int(tlblY)), 2, (255, 0, 0), -1)
+            # cv2.circle(orig, (int(trbrX), int(trbrY)), 2, (255, 0, 0), -1)
+            # cv2.line(orig, (int(tltrX), int(tltrY)), (int(blbrX),
+            # int(blbrY)),(0, 255, 255), 2)
+            # cv2.line(orig, (int(tlblX), int(tlblY)), (int(trbrX),
+            # int(trbrY)),(0, 255, 255), 2)
+            # compute the Euclidean distances between the mdpts
+            dA = dist.euclidean((tltrX, tltrY), (blbrX, blbrY))
+            dB = dist.euclidean((tlblX, tlblY), (trbrX, trbrY))
 
-                distA = dA
-                distB = dB
-                # draw the object sizes on the image
-                #cv2.putText(orig, "{:.1f}in".format(distA),(int(tltrX - 10), int(tltrY - 10)), cv2.FONT_HERSHEY_DUPLEX,0.55, (255, 255, 255), 2)
-                #cv2.putText(orig, "{:.1f}in".format(distB),(int(trbrX + 10), int(trbrY)), cv2.FONT_HERSHEY_DUPLEX,0.55, (255, 255, 255), 2)
-                plt.imshow(orig)
-                plt.show()
+            distA = dA
+            distB = dB
+            print(distA,distB)
+            # draw the object sizes on the image
+            #cv2.putText(orig, "{:.1f}in".format(distA),(int(tltrX - 10), int(tltrY - 10)), cv2.FONT_HERSHEY_DUPLEX,0.55, (255, 255, 255), 2)
+            #cv2.putText(orig, "{:.1f}in".format(distB),(int(trbrX + 10), int(trbrY)), cv2.FONT_HERSHEY_DUPLEX,0.55, (255, 255, 255), 2)
+            plt.imshow(orig)
+            plt.show()
 
+
+    def saveDataTable(self):
+        #write all the data saved in self.detections to a csv file
+        filename = 'musseldatatable.csv'
+
+        with open(filename, 'w') as csvfile:
+            csvwriter = csv.writer(csvfile)
+            csvwriter.writerow(['classId', 'Height', 'Width'])
+            for mussel in self.detections:
+                csvwriter.writerow([mussel.classId, mussel.height, mussel.width])
+        
 
 if __name__ == "__main__":
     app = darkentDetection()
     app.mTileImage()
     app.mDetectMussels()
-    #app.mMeasureDetectedMussels()
+    app.mMeasureDetectedMussels()
     app.mDisplayDetections()
     
 
