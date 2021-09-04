@@ -1,6 +1,7 @@
 coding standards
 methods -> mMethod
 objects -> oObject
+dataclass -> dClass
 
 
 
@@ -55,6 +56,7 @@ display detections
     toggle on/off
 display count
 input pixel to inch scaling factor
+scrolling table on the right of the detections
 
 DATA
 total count of differnt classes

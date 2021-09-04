@@ -12,8 +12,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.scalingFactor = 1
         self.pixelMapDisplay = QtGui.QPixmap(1,1)
         self.pixelMapOriginal = QtGui.QPixmap(1,1)
-
-
         self.setupUi(self)
         self.connectSignalsSlots()
 
