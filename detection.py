@@ -191,6 +191,7 @@ class darkentDetection(dMussel):
     #takes in a image of a single detected item and returns the height and width of it
     #things to add, rotate the mussels so they all face the same direction
     def mMeasureContour(self, image):
+        image = cv2.resize(image, (image.shape[1]*2, image.shape[0]*2), interpolation=cv2.INTER_CUBIC)
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         gray = cv2.GaussianBlur(gray, (7,7), 0)
         edge_detect = cv2.Canny(gray, 15, 100)
