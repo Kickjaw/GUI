@@ -1,0 +1,1 @@
+pyuic5 MusselGUI.ui -o mussel_gui.py

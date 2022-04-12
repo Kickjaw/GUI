@@ -12,26 +12,119 @@ import imutils
 from numpy.lib.arraysetops import intersect1d
 from scipy.spatial import distance as dist
 from sklearn.cluster import KMeans
-import math
+from math import copysign, log10
+
+white = (255,255,255)
+master = cv2.imread('9.png')
+image1 = cv2.imread('6.png')
+src = cv2.imread('test.png', cv2.IMREAD_GRAYSCALE)
+image3 = cv2.imread('4.png')
+images = [master, image1, src, image3]
+scaledImages = []
+cts=[]
+x = []
+
+kernal = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(3,3))
+kernal2 = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(7,7))
+kernal3 = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(6,6))
+
+def circleMask(image):
+    center = (int(image.shape[1]/2),int(image.shape[0]/2))
+    mask = np.zeros(image.shape[0:2], np.uint8)
+    cv2.circle(mask, center, 15,255,-1)
+    return mask
+
+# Thresholding using THRESH_BINARY_INV 
+th, dst = cv2.threshold(src,127,255, cv2.THRESH_BINARY_INV)
+x = cv2.erode(dst, kernal3, iterations=3)
+y = cv2.bitwise_and(x, circleMask(x))
+z = cv2.dilate(y, kernal3, iterations=2)
+h = cv2.bitwise_and(src,src, mask = z)
+
+
+ 
+plt.subplot(2,2,1), plt.imshow(h, cmap='gray')
+plt.subplot(2,2,2), plt.imshow(src, cmap='gray')
+plt.subplot(2,2,3), plt.imshow(y, cmap='gray')
+plt.subplot(2,2,4), plt.imshow(z, cmap='gray')
+plt.show()
+
+# Thresholding using THRESH_TRUNC 
+th, dst = cv2.threshold(src,127,255, cv2.THRESH_TRUNC); 
 
 
 
-image = cv2.imread('6.png')
-image = cv2.resize(image, (image.shape[1]*2, image.shape[0]*2), interpolation=cv2.INTER_CUBIC)
+
+
+
+
+
+
+
+
+""" 
+def HuMoments():
+    image = cv2.imread('6.png', cv2.IMREAD_GRAYSCALE)
+    _,binImage = cv2.threshold(image, 128, 255, cv2.THRESH_BINARY)
+    # Calculate Moments 
+    moments = cv2.moments(binImage) 
+    # Calculate Hu Moments 
+    huMoments = cv2.HuMoments(moments)
+    for i in range(0,7):
+        huMoments[i] = -1* copysign(1.0, huMoments[i]) * log10(abs(huMoments[i]))
+
 
 def getContours(image):
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    gray = cv2.GaussianBlur(gray, (7,7), 0)
-    edge_detect = cv2.Canny(gray, 15, 100)
-    edge_detect = cv2.dilate(edge_detect, None, iterations=1)
-    edge_detect = cv2.erode(edge_detect, None, iterations=1)
+    gray = cv2.GaussianBlur(gray, (3,3), 0)
+    edge_detect = cv2.Canny(gray, 15, 75)
+    edge_detect = cv2.dilate(edge_detect, kernal3, iterations=1)
+    edge_detect = cv2.erode(edge_detect, kernal3, iterations=1)
 
     cntours = cv2.findContours(edge_detect.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    
     cntours = imutils.grab_contours(cntours)
+    cv2.drawContours(image,cntours,-1,white,1)
+    plt.imshow(image)
+    plt.show()
     (cntours, _) = contours.sort_contours(cntours)
     return cntours
 
-cntours = getContours(image)
+#shape matching tests
+for image in images:
+    scaledImages.append(cv2.resize(image, (image.shape[1]*2, image.shape[0]*2), interpolation=cv2.INTER_CUBIC))
+
+for i in range(1,5):
+    plt.subplot(2,2,i), plt.imshow(scaledImages[i-1], cmap='gray')
+
+plt.show()
+
+for image in scaledImages:
+    cts.append(getContours(image))
+
+
+
+
+for i in cts:
+    img = np.zeros(scaledImages[0].shape[0:2])
+    cv2.drawContours(img, i, -1,(255,255,255),thickness=cv2.FILLED)
+    x.append(img)
+
+for i in range(1,5):
+    plt.subplot(2,2,i), plt.imshow(x[i-1], cmap='gray')
+    print(cv2.matchShapes(x[0], x[i - 1], 1, 0.0))
+plt.show()
+
+
+
+
+
+
+
+
+
+
+
 
 (x,y),radius = cv2.minEnclosingCircle(cntours[0])
 center = (int(x),int(y))
@@ -55,8 +148,6 @@ corners = []
 for point in cCenters:
     corners.append([point[1], point[0]])
 
-print(corners)
-
 for i in range(3):
    cv2.line(image, tuple(corners[i]), tuple(corners[(i+1)%3]), (255, 255, 0), 1)
 
@@ -77,13 +168,7 @@ def normalizeAngle(corners):
     return angle
     
 
-
-
 image = imutils.rotate_bound(image,np.degrees(normalizeAngle(corners))-90)
-
-
-plt.imshow(image)
-plt.show()
 
 
 cntours = getContours(image)
@@ -105,9 +190,6 @@ areaSorted = sorted(cntours, key = cv2.contourArea, reverse=True)
 
 
 cv2.drawContours(image,areaSorted[2],-1,(255,255,255),1)
-
-plt.imshow(image)
-plt.show()
 
 
 
@@ -136,8 +218,4 @@ distB = h
 # draw the object sizes on the image
 cv2.putText(orig, "{:.1f}Px".format(distA),(int(tltrX - 10), int(tltrY - 10)), cv2.FONT_HERSHEY_DUPLEX,0.55, (255, 255, 255), 2)
 cv2.putText(orig, "{:.1f}Px".format(distB),(int(trbrX + 10), int(trbrY)), cv2.FONT_HERSHEY_DUPLEX,0.55, (255, 255, 255), 2)
-
-
-# show the output image
-plt.imshow(orig)
-plt.show()
+ """
