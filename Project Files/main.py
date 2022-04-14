@@ -18,6 +18,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.setupUi(self)
         self.logger = logger()
         self.connectSignalsSlots()
+    
+    def closeEvent(self, event):
+        self.logger.recordLog('Status', 'Main Window Closed')
+        self.logger.save()
 
     def connectSignalsSlots(self):
         self.actionOpen.triggered.connect(self.openImage)
@@ -28,6 +32,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.action50.triggered.connect(self.set50)
         self.action25.triggered.connect(self.set25)
         self.oDetectionButton.clicked.connect(self.detectionButton)
+
 
     def zoomIn(self):
         self.scaleImage(1.25)
@@ -44,7 +49,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     
     def detectionButton(self):
-        self.logger.recordLog('Status', 'Detection button hit starting detection with confidence level' + self.detection.confidenceCutOff)
+        self.logger.recordLog('Status', 'Detection button hit starting detection with confidence level' + str(self.detection.confidenceCutOff/100))
+        self.logger.recordLog('Status', 'Detecting on file:' + str(self.oLoadedFilePathLabel.text()))
         self.detection.confidenceCutOff = int(self.oConfidenceLevelInput.text())/100
         self.detection.image = Image.open(self.oLoadedFilePathLabel.text())
         self.detection.imagecv2 = self.image
@@ -108,11 +114,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         return Qimage
 
-
-
     
-
-
+    
 
 
 if __name__ == "__main__":
